@@ -17,6 +17,7 @@ const getFilePath = (dir, filename) => path.join(dir, filename);
       fs.mkdir(pathBuild, (err) => {
         if (err) throw err;
       });
+      buildHtml();
       buildCss();
       copyAssets();
     });
@@ -24,6 +25,7 @@ const getFilePath = (dir, filename) => path.join(dir, filename);
     fs.mkdir(pathBuild, (err) => {
       if (err) throw err;
     });
+    await buildHtml();
     buildCss();
     await copyAssets();
   }
@@ -54,4 +56,19 @@ async function copyDir(src,dest) {
       await fsPromises.copyFile(srcPath, destPath);
     }
   }
+}
+
+async function buildHtml() {
+  const pathComponents = path.resolve(__dirname, 'components');
+  const output = fs.createWriteStream(path.join(pathBuild, 'index.html'));
+  const data = await fsPromises.readFile(path.resolve(__dirname, 'template.html'));
+  let template = data.toString();
+  const files = await fsPromises.readdir(pathComponents, {withFileTypes: true});
+  for (const file of files) {
+    if (path.extname(file.name) === '.html' && file.isFile()) {
+      const data = await fsPromises.readFile(path.join(pathComponents, file.name));
+      template = template.replace(`{{${file.name.split('.')[0]}}}`, data.toString());
+    }
+  }
+  output.write(template);
 }
