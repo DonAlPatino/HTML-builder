@@ -10,8 +10,7 @@ const pathNewAssetsFiles = path.resolve(pathBuild, 'assets');
 const getFilePath = (dir, filename) => path.join(dir, filename);
 
 (async function() {
-  try {
-    await fsPromises.access(pathBuild);
+  await fsPromises.access(pathBuild).then(() => {
     fs.rm(pathBuild, { recursive: true, force: true }, (err) => {
       if (err) throw err;
       fs.mkdir(pathBuild, (err) => {
@@ -21,14 +20,15 @@ const getFilePath = (dir, filename) => path.join(dir, filename);
       buildCss();
       copyAssets();
     });
-  } catch (error) {
-    fs.mkdir(pathBuild, (err) => {
-      if (err) throw err;
+  })
+    .catch(() => {
+      fs.mkdir(pathBuild, (err) => {
+        if (err) throw err;
+      });
+      buildHtml();
+      buildCss();
+      copyAssets();
     });
-    await buildHtml();
-    buildCss();
-    await copyAssets();
-  }
 })();
 
 function buildCss() {
