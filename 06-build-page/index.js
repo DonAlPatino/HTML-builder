@@ -21,13 +21,13 @@ const getFilePath = (dir, filename) => path.join(dir, filename);
     });
 })();
 
-function buildAll(){
-  fs.mkdir(pathBuild, (err) => {
-    if (err) throw err;
-  });
-  buildHtml();
-  buildCss();
-  copyAssets();
+async function buildAll() {
+  await fsPromises.mkdir(pathBuild, {recursive: true});
+  await Promise.all([
+    buildHtml(),
+    buildCss(),
+    copyAssets(),
+  ]);
 }
 
 async function buildCss() {
