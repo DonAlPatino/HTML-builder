@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const fsPromises = require('fs').promises;
+const fsPromises= require('fs').promises;
 
 const pathStyleFiles = path.resolve(__dirname, 'styles');
 const pathAssetsFiles = path.resolve(__dirname, 'assets');
@@ -13,33 +13,32 @@ const getFilePath = (dir, filename) => path.join(dir, filename);
   await fsPromises.access(pathBuild).then(() => {
     fs.rm(pathBuild, { recursive: true, force: true }, (err) => {
       if (err) throw err;
-      fs.mkdir(pathBuild, (err) => {
-        if (err) throw err;
-      });
-      buildHtml();
-      buildCss();
-      copyAssets();
+      buildAll();
     });
   })
     .catch(() => {
-      fs.mkdir(pathBuild, (err) => {
-        if (err) throw err;
-      });
-      buildHtml();
-      buildCss();
-      copyAssets();
+      buildAll();
     });
 })();
 
-function buildCss() {
-  const output = fs.createWriteStream(getFilePath(pathBuild, 'style.css'));
-  fs.readdir(pathStyleFiles, (err, files) => {
-    files.forEach((file) => {
-      if (path.extname(file).substring(1) === 'css') {
-        fs.createReadStream(getFilePath(pathStyleFiles, file)).pipe(output);
-      }
-    });
+function buildAll(){
+  fs.mkdir(pathBuild, (err) => {
+    if (err) throw err;
   });
+  buildHtml();
+  buildCss();
+  copyAssets();
+}
+
+async function buildCss() {
+  const output = fs.createWriteStream(getFilePath(pathBuild, 'style.css'));
+  const files = await fsPromises.readdir(pathStyleFiles, {withFileTypes: true});
+  for (const file of files) {
+    if (path.extname(file.name).substring(1) === 'css' && file.isFile()) {
+      const data = await fsPromises.readFile(path.resolve(pathStyleFiles, file.name));
+      output.write(data.toString());
+    }
+  }
 }
 async function copyAssets() {
   await copyDir(pathAssetsFiles, pathNewAssetsFiles);

@@ -14,17 +14,16 @@ const getFilePath = (filename) => path.join(pathFiles, filename);
       buildBundle();
     });
   } catch (error) {
-    buildBundle();
+    await buildBundle();
   }
 })();
-
-function buildBundle() {
+async function buildBundle() {
   const output = fs.createWriteStream(pathFilesCopy);
-  fs.readdir(pathFiles, (err, files) => {
-    files.forEach((file) => {
-      if (path.extname(file).substring(1) === 'css') {
-        fs.createReadStream(getFilePath(file)).pipe(output);
-      }
-    });
-  });
+  const files = await fsPromises.readdir(pathFiles, {withFileTypes: true});
+  for (const file of files) {
+    if (path.extname(file.name).substring(1) === 'css' && file.isFile()) {
+      const data = await fsPromises.readFile(getFilePath(file.name));
+      output.write(data.toString());
+    }
+  }
 }
