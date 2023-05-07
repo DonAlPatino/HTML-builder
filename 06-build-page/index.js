@@ -9,16 +9,17 @@ const pathNewAssetsFiles = path.resolve(pathBuild, 'assets');
 
 const getFilePath = (dir, filename) => path.join(dir, filename);
 
-(async function() {
-  await fsPromises.access(pathBuild).then(() => {
-    fs.rm(pathBuild, { recursive: true, force: true }, (err) => {
-      if (err) throw err;
-      buildAll();
-    });
-  })
-    .catch(() => {
-      buildAll();
-    });
+(async () => {
+  try {
+    await fsPromises.access(pathBuild);
+    console.log('clear build directory');
+    await fsPromises.rm(pathBuild, {recursive: true, force: true});
+  } catch (e){
+    console.log('create build directory');
+  }
+  finally {
+    await buildAll();
+  }
 })();
 
 async function buildAll() {
